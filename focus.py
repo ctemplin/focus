@@ -473,9 +473,14 @@ manually find and kill any existing focus.py process")
                         alt_ns = cli_options.nameserver or choice(nameservers)
                         log.info("%s for %r (%s) is allowed, forwarding to %s",
                             qtype_readable, domain, qid, alt_ns)
-                        fdns = ForwardedDNS(sender, alt_ns, question, config["ttl"])
-                        readers.append(fdns)
-                        continue
+                        try:
+                            fdns = ForwardedDNS(sender, alt_ns, question, config["ttl"])
+                            readers.append(fdns)
+                            continue
+                        except OSError as err:
+                            log.info("OS error: {0}".format(err))
+                            reply = b""
+                            continue
 
                     # if we can't visit it now, direct it to the FAIL_IP
                     else:
@@ -487,9 +492,13 @@ manually find and kill any existing focus.py process")
                 # nameservers look those up, and don't adjust ttl
                 else:
                     log.info("%s for %r (%s) is allowed", qtype_readable, domain, qid)
-                    fdns = ForwardedDNS(sender, nameservers[0], question)
-                    readers.append(fdns)
-                    continue
+                    try:
+                        fdns = ForwardedDNS(sender, nameservers[0], question)
+                        readers.append(fdns)
+                        continue
+                    except OSError as err:
+                        log.info("OS error: {0}".format(err))
+                        continue
 
 
             server.sendto(reply, sender)
